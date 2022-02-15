@@ -1,11 +1,13 @@
-import { Link, NavigationContainer } from "@react-navigation/native";
+import { Link } from "@react-navigation/native";
 import axios from "axios";
 import { useContext, useState } from "react";
 import { Button, Text, View } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
 import { checkEmail, checkPassword } from "../../helpers";
-import { ACTIONS } from "../global-state/reducer";
-import { Context } from "../global-state/Store";
+import { ACTIONS } from "../../global-state/reducer";
+import { Context } from "../../global-state/Store";
+import { AUTH_KEY } from '@env';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const Register = ({navigation}) => {
     const [firstName, setFirstName] = useState('');
@@ -58,7 +60,7 @@ export const Register = ({navigation}) => {
             username,
             password
         })
-        .then(res => {
+        .then(async res => {
             switch(res.data) {
                 case 'Unknown':
                     setStatus('An unexpected error has occured');
@@ -70,8 +72,19 @@ export const Register = ({navigation}) => {
 
                 default:
                     setStatus('');
-                    dispatch({type: ACTIONS.USER_LOGIN, userInfo: res.data});
-                    navigation.navigate('TeamLogin');
+                    dispatch({
+                        type: ACTIONS.USER_LOGIN, 
+                        userInfo: res.data
+                    });
+
+                    try {
+                        await AsyncStorage.setItem(AUTH_KEY, res.data.username);
+                        dispatch({
+                            type: ACTIONS.STACK_DECIDER_REFRESH
+                        });
+                    } catch {
+                        setStatus('An unexpected error has occured');
+                    }
             }
         })
         .catch(() => {

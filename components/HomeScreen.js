@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Context } from "./global-state/Store";
+import { Context } from "../global-state/Store";
 
 export const HomeScreen = ({ navigation }) => {
     const [state, dispatch] = useContext(Context);

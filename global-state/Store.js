@@ -2,8 +2,9 @@ import { createContext, useReducer } from "react";
 import { reducer } from "./reducer";
 
 const initialState = {
-    userInfo: 'userInfo',
-    teamInfo: null
+    userInfo: null,
+    teamInfo: null,
+    stackDeciderRefreshSwitch: true
 };
 
 const Context = createContext(initialState);

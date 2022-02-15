@@ -36,4 +36,20 @@ const checkEmail = email => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 };
 
-export { checkPassword, checkEmail };
+const updateUser = (key, updateValue, username) => {
+    axios.post('https://star-trak.herokuapp.com/update-user', {
+        key,
+        updateValue,
+        username
+    })
+    .then(res => {
+        if (res.data.message) {
+            return res.data.message;
+        } else {
+            store.dispatch({type: 'USER LOGIN', userObj: res.data});
+            return 'Success';
+        }
+    });
+};
+
+export { checkPassword, checkEmail, updateUser };

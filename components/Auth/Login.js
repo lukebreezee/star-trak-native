@@ -1,10 +1,13 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useState } from "react";
 import { View, Text, Button, StyleSheet } from "react-native";
 import { TextInput } from "react-native-gesture-handler";
-import { Link, useFocusEffect } from "@react-navigation/native";
+import { Link } from "@react-navigation/native";
+import { Context } from "../../global-state/Store";
+import { ACTIONS } from "../../global-state/reducer";
+import { AUTH_KEY, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET } from '@env';
+import { GoogleSignin, GoogleSigninButton } from "@react-native-google-signin/google-signin";
 import axios from "axios";
-import { Context } from "../global-state/Store";
-import { ACTIONS } from "../global-state/reducer";
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const styles = StyleSheet.create({
     container: {
@@ -14,24 +17,17 @@ const styles = StyleSheet.create({
     }
 });
 
+// GoogleSignin.configure({
+//     webClientId: GOOGLE_CLIENT_ID,
+//     offlineAccess: true,
+// })
+
 export const Login = ({navigation}) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [status, setStatus] = useState('');
     const [state, dispatch] = useContext(Context);
 
-    useFocusEffect(() => {
-        setStatus('');
-
-        if (state.userInfo !== null) {
-            if (state.teamInfo !== null) {
-                navigation.navigate('Home');
-            } else {
-                navigation.navigate('TeamLogin');
-            }
-        }
-    });
-    
     const handleSignIn = () => {
         setStatus('Loading...');
 
@@ -39,7 +35,7 @@ export const Login = ({navigation}) => {
             username,
             password
         })
-        .then(res => {
+        .then(async res => {
             switch(res.data.message) {
                 case 'Incorrect':
                     setStatus('Email or password is incorrect');
@@ -50,27 +46,24 @@ export const Login = ({navigation}) => {
                     break;
 
                 default:
-                    setStatus('');
                     dispatch({
                         type: ACTIONS.USER_LOGIN, 
                         userInfo: res.data
                     });
 
-                    if (!res.data.teamUsername) {
-                        navigation.navigate('TeamLogin');
-                        return;
-                    } 
+                    try {
+                        await AsyncStorage.setItem(AUTH_KEY, res.data.username);
 
-                    axios.post('https://star-trak.herokuapp.com/get-team-info', {
-                        teamUsername: state.userInfo.teamUsername
-                    })
-                    .then(res => {
                         dispatch({
-                            type: ACTIONS.TEAM_INFO_UPDATE,
-                            teamInfo: res.data
+                            type: ACTIONS.STACK_DECIDER_REFRESH
                         });
-                        navigation.navigate('Home');
-                    });
+                    } catch (e) {
+                        setStatus('An unexpected error has occurred');
+                        return;
+                    }
+
+                    setStatus('');
+
             }
         })
         .catch(() => {
@@ -99,6 +92,8 @@ export const Login = ({navigation}) => {
                 title="Submit"
                 onPress={() => handleSignIn()}
             />
+            {/* <GoogleSigninButton
+            /> */}
             <Link to={{screen: 'Register'}}>Register</Link>
         </View>
     );
